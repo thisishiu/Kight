@@ -3,10 +3,22 @@ import os
 
 BASE_IMP_PATH = 'assets/'
 
-def load_image(path):
-    img = pygame.image.load(BASE_IMP_PATH + path)
-    # img.set_colorkey((255,255,255))
-    return img
+import pygame
+import os
+
+def load_image(path, colorkey=None):
+    path = BASE_IMP_PATH + path
+    try:
+        image = pygame.image.load(os.path.join(path)).convert_alpha()
+    except pygame.error as e:
+        print(f"Can not load the image: {path}")
+        raise SystemExit(e)
+    
+    if colorkey is not None:
+        image.set_colorkey(colorkey)
+    
+    return image
+
 
 def load_images(path):
     images = []
