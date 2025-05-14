@@ -1,191 +1,95 @@
-# from scripts.settings import *
-
-# NEIGHTBOR_OFFSETS = [(-1, 1), (-1, 0), (1, 1), (-1, 0), (0, 0), (1, 0), (-1, -1), (0, -1), (1, -1)]
-
-# class Tilemap:
-#     def __init__(self, game, tile_size = TILE_SIZE):
-#         self.game = game
-#         self.tile_size = tile_size
-#         self.tilemap = {}
-#         self.offgrid_tiles = []
-        
-#         # test
-#         # for i in range(2,4):
-#         #     for j in range(1,4):
-#         #         self.tilemap[str(i) + ';' + str(j)] = {'type' : 'stone_bottom', 'varian' : 5, 'pos' : (i, j)}
-#         # self.tilemap['2;1'] = {'type' : 'stone_bottom', 'varian' : 15, 'pos' : (2, 1)}
-        
-        
-#     def tile_around(self, pos):
-#         tile = []
-#         tile_loc = (int(pos[0] // self.tile_size), int(pos[1] // self.tile_size)) 
-#         for offset in NEIGHTBOR_OFFSETS:
-#             check_loc = str(tile_loc[0] + offset[0]) + ';' + str(tile_loc[1] + offset[1])
-#             if check_loc in self.tilemap:
-#                 tile.append(self.tilemap[check_loc])
-#         return tile
-        
-#     def render(self, surf):
-#         for tile in self.offgrid_tiles:
-#             surf.blit(self.game.assets[tile['type']][tile['varian']], tile['pos'])
-#         # i = 0
-#         for tile in self.tilemap.values():
-#             surf.blit(self.game.assets[tile['type']][tile['varian']], (tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size))
-#             # surf.blit(pygame.image.load('assets/player/charactor_af_process/charactor.png'), (i*self.tile_size, i*self.tile_size))
-#             # i += 1
-        
-
-import sqlite3
 from scripts.settings import *
-
-database = sqlite3.connect('database/Knight_database.db')
-cursor = database.cursor()
-
-# cursor.execute("""
-# select * from TileMap_1;
-#                """)
-
-# dataMap_1 = cursor.fetchall()
+from scripts.utils import *
 
 class TileMap:
-    def __init__(self, game, tile_size = TILE_SIZE):
-        self.game = game
-        self.tile_size = tile_size
-        
-    def __add_TileMap_1(self):
-        cursor.execute("""
-insert into TileMap_1
-values                  
-    (1, 1, 1, 'ground', 'grass', 1),
-	(1, 2, 1, 'ground', 'grass', 21),
-	
-	(2, 1, 1, 'ground', 'grass', 3),
-	(2, 2, 1, 'ground', 'grass', 13),
-	(2, 3, 1, 'ground', 'grass', 11),
-	(2, 4, 1, 'ground', 'grass', 11),
-	(2, 5, 1, 'ground', 'grass', 11),
-	(2, 6, 1, 'ground', 'grass', 11),
-	(2, 7, 1, 'ground', 'grass', 21),
-	
-	(3, 1, 1, 'ground', 'grass', 4),
-	(3, 2, 1, 'ground', 'grass', 13),
-	(3, 3, 1, 'ground', 'grass', 13),
-	(3, 4, 1, 'ground', 'grass', 13),
-	(3, 5, 1, 'ground', 'grass', 13),
-	(3, 6, 1, 'ground', 'grass', 13),
-	(3, 7, 1, 'ground', 'grass', 23),
-	
-	(4, 2, 1, 'ground', 'grass', 3),
-	(4, 3, 1, 'ground', 'grass', 13),
-	(4, 4, 1, 'ground', 'grass', 13),
-	(4, 5, 1, 'ground', 'grass', 13),
-	(4, 6, 1, 'ground', 'grass', 14),
-	(4, 7, 1, 'ground', 'grass', 24),
-	
-	(5, 2, 1, 'ground', 'grass', 3),
-	(5, 3, 1, 'ground', 'grass', 13),
-	(5, 4, 1, 'ground', 'grass', 14),
-	(5, 5, 1, 'ground', 'grass', 24),
+    def __init__(self):
+        self.tile_size = TILE_SIZE
+    #     self.map_1 = [
+    #         (4, 2, 1, 'ground', 'grass', 1),
+    #         (4, 3, 1, 'ground', 'grass', 11),
+    #         (4, 4, 1, 'ground', 'grass', 11),
+    #         (4, 5, 1, 'ground', 'grass', 11),
+    #         (4, 6, 1, 'ground', 'grass', 21),
+            
+    #         (5, 2, 1, 'ground', 'grass', 3),
+    #         (5, 3, 1, 'ground', 'grass', 13),
+    #         (5, 4, 1, 'ground', 'grass', 13),
+    #         (5, 5, 1, 'ground', 'grass', 13),
+    #         (5, 6, 1, 'ground', 'grass', 23),
+            
+    #         (6, 2, 1, 'ground', 'grass', 3),
+    #         (6, 3, 1, 'ground', 'grass', 13),
+    #         (6, 4, 1, 'ground', 'grass', 13),
+    #         (6, 5, 1, 'ground', 'grass', 13),
+    #         (6, 6, 1, 'ground', 'grass', 23),
+            
+    #         (7, 2, 1, 'ground', 'grass', 3),
+    #         (7, 3, 1, 'ground', 'grass', 13),
+    #         (7, 4, 1, 'ground', 'grass', 13),
+    #         (7, 5, 1, 'ground', 'grass', 13),
+    #         (7, 6, 1, 'ground', 'grass', 23),
+            
+    #         (8, 2, 1, 'ground', 'grass', 3),
+    #         (8, 3, 1, 'ground', 'grass', 13),
+    #         (8, 4, 1, 'ground', 'grass', 13),
+    #         (8, 5, 1, 'ground', 'grass', 13),
+    #         (8, 6, 1, 'ground', 'grass', 23),
+            
+    #         (9, 2, 1, 'ground', 'grass', 4),
+    #         (9, 3, 1, 'ground', 'grass', 14),
+    #         (9, 4, 1, 'ground', 'grass', 14),
+    #         (9, 5, 1, 'ground', 'grass', 14),
+    #         (9, 6, 1, 'ground', 'grass', 24),
+    #     ]
+    #     self.map = {
+    #         1: self.map_1
+    #     }
 
-	(6, 1, 1, 'ground', 'grass', 1),
-	(6, 2, 1, 'ground', 'grass', 13),
-	(6, 3, 1, 'ground', 'grass', 23),
-	
-	(7, 1, 1, 'ground', 'grass', 3),
-	(7, 2, 1, 'ground', 'grass', 13),
-	(7, 3, 1, 'ground', 'grass', 23),
-	
-	(8, 1, 1, 'ground', 'grass', 4),
-	(8, 2, 1, 'ground', 'grass', 14),
-	(8, 3, 1, 'ground', 'grass', 24);
-               """)
-        
-    def TileMap(self, map):
-        cursor.execute(f"""
-select * from TileMap_{map}
-order by y;
-               """)
-        data = dict()
-        for i in cursor.fetchall():
-            if i[2] not in data.keys():
-                # data[i[2]] = {'ground': [],
-                #               'wall': [],
-                #               'deco': []}
-                data[i[2]] = [[(i[0], i[1]), i[3], i[4], i[5]]]
-            else:
-                data[i[2]].append([(i[0], i[1]), i[3], i[4], i[5]])
-        return data
-        
-    def __add_TileMap_2(self):
-        cursor.execute("""
-insert into TileMap_2
-values
-    (4, 2, 1, 'ground', 'stone', 0),
-    (4, 3, 1, 'ground', 'stone', (abs(random()) % 2) * (8 - 4) + 4),
-    (4, 4, 1, 'ground', 'stone', (abs(random()) % 2) * (8 - 4) + 4),
-    (4, 5, 1, 'ground', 'stone', (abs(random()) % 2) * (8 - 4) + 4),
-    (4, 6, 1, 'ground', 'stone', (abs(random()) % 2) * (8 - 4) + 4),
-    (4, 7, 1, 'ground', 'stone', 12),
-    
-    (5, 2, 1, 'ground', 'stone', 1),
-    (5, 3, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (5, 4, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (5, 5, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (5, 6, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (5, 7, 1, 'ground', 'stone', 13),
-    
-    (6, 2, 1, 'ground', 'stone', 1),
-    (6, 3, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (6, 4, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (6, 5, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (6, 6, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (6, 7, 1, 'ground', 'stone', 13),
-    
-    (7, 2, 1, 'ground', 'stone', 1),
-    (7, 3, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (7, 4, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (7, 5, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (7, 6, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (7, 7, 1, 'ground', 'stone', 13),
-    
-    (8, 2, 1, 'ground', 'stone', 1),
-    (8, 3, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (8, 4, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (8, 5, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (8, 6, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (8, 7, 1, 'ground', 'stone', 13),
-    
-    (9, 2, 1, 'ground', 'stone', 1),
-    (9, 3, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (9, 4, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (9, 5, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (9, 6, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (9, 7, 1, 'ground', 'stone', 13),
-    
-    (10, 2, 1, 'ground', 'stone', 1),
-    (10, 3, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (10, 4, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (10, 5, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (10, 6, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (10, 7, 1, 'ground', 'stone', 13),
-    
-    (11, 2, 1, 'ground', 'stone', 1),
-    (11, 3, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (11, 4, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (11, 5, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (11, 6, 1, 'ground', 'stone', (abs(random()) % 2) * (9 - 5) + 5),
-    (11, 7, 1, 'ground', 'stone', 13),
-    
-    (12, 2, 1, 'ground', 'stone', 2),
-    (12, 3, 1, 'ground', 'stone', (abs(random()) % 2) * (10 - 6) + 6),
-    (12, 4, 1, 'ground', 'stone', (abs(random()) % 2) * (10 - 6) + 6),
-    (12, 5, 1, 'ground', 'stone', (abs(random()) % 2) * (10 - 6) + 6),
-    (12, 6, 1, 'ground', 'stone', (abs(random()) % 2) * (10 - 6) + 6),
-    (12, 7, 1, 'ground', 'stone', 14);
-         """)
-        
-    def render(self):
-        pass
+    # def TileMap(self, map):
+    #     data = dict()
+    #     for i in self.map[map]:
+    #         if i[2] not in data.keys():
+    #             # data[i[2]] = {'ground': [],
+    #             #               'wall': [],
+    #             #               'deco': []}
+    #             data[i[2]] = [[(i[0], i[1]), i[3], i[4], i[5]]]
+    #         else:
+    #             data[i[2]].append([(i[0], i[1]), i[3], i[4], i[5]])
+    #     return data
+    def update(self): ...   
 
-# print(TileMap(1).TileMap_1())
+class TileMap_1(TileMap):
+    def __init__(self):
+        super().__init__()
+        self.ground = load_images(r"tilemap/tilemap_1")
+        self.pos = (0, 0)
+        self.set_player_pos = (1 * TILE_SIZE, 1 * TILE_SIZE)
+        self.set_enemy_pos = (2 * TILE_SIZE, 3 * TILE_SIZE)
+        
+        self.__current_frame_index = 0
+        self.current_frame = self.ground[self.__current_frame_index]
+        self.__frame_time = 1000//FPS * 8
+        self.__last_update_time =  pygame.time.get_ticks()
+        
+        self.wall_size = [
+            [1 * TILE_SIZE, 5 * TILE_SIZE],
+            [5 * TILE_SIZE, 1 * TILE_SIZE],
+            [1 * TILE_SIZE, 5 * TILE_SIZE],
+            [5 * TILE_SIZE, 1 * TILE_SIZE]
+        ]
+        self.wall_index = [
+            [0 * TILE_SIZE, 1 * TILE_SIZE],
+            [1 * TILE_SIZE, 0 * TILE_SIZE],
+            [6 * TILE_SIZE, 1 * TILE_SIZE],
+            [1 * TILE_SIZE, 6 * TILE_SIZE]
+        ]
+        self.wall = [
+            pygame.mask.from_surface(pygame.Surface((x[0]*TILE_SIZE, x[1]*TILE_SIZE))) for x in self.wall_size
+        ]
 
+    def update(self):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.__last_update_time > self.__frame_time:
+            self.__current_frame_index = (self.__current_frame_index + 1) % len(self.ground)
+            self.__last_update_time = current_time
+            self.current_frame = self.ground[self.__current_frame_index]

@@ -1,0 +1,3 @@
+from scripts.settings import *
+
+def colission(): ...

@@ -2,12 +2,6 @@ import pygame
 from scripts.settings import *
 from scripts.utils import *
 
-# import pygame
-# from settings import *
-# from utils import *
-
-# screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
 class PhysicsEntity(pygame.sprite.Sprite):
     def __init__(self, pos, e_type):
         super().__init__()
@@ -15,88 +9,53 @@ class PhysicsEntity(pygame.sprite.Sprite):
         self.pos = pygame.math.Vector2(pos)
         self.velocity = pygame.math.Vector2(0,0)  # (x, y)
         
-    # def update(self, movement=[0,0]): pass
+    
+    def update(self, *args, **kwargs): ...
     
 class Player(PhysicsEntity):
     def __init__(self, pos, e_type='player'):
         super().__init__(pos, e_type)
         self.speed = PLAYER_SPEED
-        self.sprite_sheet = 'player/charactor.png'
+        self.sprite_sheet = 'player/character_3_sheet_DONE-sheet.png'
         
-        self.__state = 'idle_1'     # default state
-        self.__last_state = self.__state    # lated state of player, default is idle_1
+        self.state = 'idle'     # default state
+        self.__last_state = self.state    # lated state of player, default is idle_1
         
-        self.frame_size = [32, 32]
+        self.__frame_time = { # time between two frames of an action
+            'hurt': 1000 // FPS,
+            'attack_1': 1000 // FPS * 5, 
+            'idle': 1000 // FPS * 20,
+            'road': 1000 // FPS * 5,
+            'attack_2': 1000 // FPS * 5, 
+            'run': 1000 // FPS * 5,
+            'die': 1000 // FPS,
+        }
+        self.__act = [act for act in self.__frame_time.keys()]
+        self.__counter = 0
+        self.frame_size = [96, 40]
         self.frame = self.__preloadImage(self.sprite_sheet) # a sheet
         self.current_frame_index = 0    # index of frame(list)
-        self.current_frame = self.frame[self.__state][self.current_frame_index]
+        self.current_frame = self.frame[self.state][self.current_frame_index]
+        self.mask = pygame.mask.from_surface(self.frame[self.state][self.current_frame_index])
+        self.mask_flag = True
         
         self.__directions = {1: 'right', -1: 'left'}    # asset has two directions
         self.direction = self.__directions[1]   # default diretion is right
         
-        self.__last_update_time = pygame.time.get_ticks()   # time od the last frame action
+        self.__last_update_time = pygame.time.get_ticks()   # time of the last frame action
         
         self.rect = pygame.Rect(self.pos.x, self.pos.y, self.frame_size[0], self.frame_size[1])
-        
-        self.__frame_time = { # time between two frames of an action
-            'idle_1': 1000 // FPS * 20,
-            'idle_2': 1000 // FPS,
-            'idle_3': 1000 // FPS,
-            'die': 1000 // FPS,
-            'attack': 1000 // FPS * 5, 
-            'walk': 1000 // FPS,
-            'run': 1000 // FPS * 5,
-            'jump': 1000 // FPS
-        }
+
         
     def __preloadImage(self, link):
-        """
-        frame:
-            0: idle 1 
-            1: idle 2
-            2: walk
-            3: run
-            4: idle 3
-            5: jump
-            6: faded
-            7: die
-            8: attack
-
-        """
-        
         sprite_sheet = load_image(link)
         frames = {}
         sheet_width, sheet_height = sprite_sheet.get_size()
         rows = sheet_height // self.frame_size[1]
         columns = sheet_width // self.frame_size[0]
         for y in range(rows):
-            if y == 0:
-                name = 'idle_1'
-                frames[name] = []
-            elif y == 1:
-                name = 'idle_2'
-                frames[name] = []
-            elif y == 2:
-                name = 'walk'
-                frames[name] = []
-            elif y == 3:
-                name = 'run'
-                frames[name] = []
-            elif y == 4:
-                name = 'idle_3'
-                frames[name] = []
-            elif y == 5:
-                name = 'jump'
-                frames[name] = []
-            elif y == 6:
-                name = 'faded'
-                frames[name] = []
-            elif y == 7:
-                name = 'die'
-                frames[name] = []
-            elif y == 8:
-                name = 'attack'
-                frames[name] = []
+            name = self.__act[y]
+            frames[name] = []
             for x in range(columns):
                 frame = sprite_sheet.subsurface(
                     pygame.Rect(
@@ -117,115 +76,119 @@ class Player(PhysicsEntity):
                     return True
         return False
 
-    def update(self, keys):             
-        move_x = (keys[pygame.K_d] - keys[pygame.K_a])
+    def update(self, keys):
+        move_x = (keys[pygame.K_d] - keys[pygame.K_a])  # movement each axes
         move_y = (keys[pygame.K_s] - keys[pygame.K_w])
-        
-        if move_x:  # direction of frame
-            self.direction = self.__directions[move_x]
          
         if move_x and move_y: # diagonal move
-            movement = pygame.Vector2(move_x, move_y).normalize()*self.speed + self.velocity
+            movement = pygame.Vector2(move_x, move_y).normalize()*self.speed
         else:
-            movement = pygame.Vector2(move_x * self.speed, move_y * self.speed) + self.velocity
+            movement = pygame.Vector2(move_x * self.speed, move_y * self.speed)
         
         __current_time = pygame.time.get_ticks()
         
-        if keys[pygame.K_SPACE]:
-            self.__state = 'attack'
-            movement = self.velocity    # can not move when attack
-        elif move_x or move_y:
-            self.__state = 'run'
-        elif not (move_x or move_y):
-            self.__state = 'idle_1'
-        
-        if self.__last_state == self.__state:
-            if __current_time - self.__last_update_time > self.__frame_time[self.__state]:
-                self.current_frame_index = (self.current_frame_index + 1) % len(self.frame[self.__state])
+        self.mask_flag = True
+        self.__counter = max(0, self.__counter)
+        if not self.__counter:
+            if keys[pygame.K_k]:
+                self.state = 'attack_2'
+                self.__counter = len(self.frame['attack_2'])
+            elif keys[pygame.K_SPACE]:
+                self.state = 'road'
+                self.__counter = len(self.frame['road'])
+            elif move_x or move_y:
+                self.state = 'run'
+            elif not (move_x or move_y):
+                self.state = 'idle'
+        else:
+            if self.state == 'attack_2':
+                movement = pygame.Vector2(0,0)    # can not move when attack
+            elif self.state == 'road':
+                if self.__counter != 7 and self.__counter != 6:
+                    movement = pygame.Vector2(0,0)
+                else:
+                    self.mask_flag = False
+                movement = movement * 3
+    
+        if move_x:  # direction of frame
+            self.direction = self.__directions[move_x]
+            
+        if self.__last_state == self.state:
+            if __current_time - self.__last_update_time > self.__frame_time[self.state]:
+                self.current_frame_index = (self.current_frame_index + 1) % len(self.frame[self.state])
                 self.__last_update_time = __current_time
                 if self.direction == 'right':
-                    self.current_frame = self.frame[self.__state][self.current_frame_index]
+                    self.current_frame = self.frame[self.state][self.current_frame_index]
                 else:
-                    self.current_frame = pygame.transform.flip(self.frame[self.__state][self.current_frame_index], True, False)
+                    self.current_frame = pygame.transform.flip(self.frame[self.state][self.current_frame_index], True, False)
+                if self.mask_flag:
+                    self.mask = pygame.mask.from_surface(self.current_frame)
+                else:
+                    self.mask = None
+                self.__counter = self.__counter - 1
         else:
             self.current_frame_index = 0
             self.__last_update_time = __current_time
-            self.__last_state = self.__state
+            self.__last_state = self.state
             if self.direction == 'right':
-                self.current_frame = self.frame[self.__state][self.current_frame_index]
+                self.current_frame = self.frame[self.state][self.current_frame_index]
             else:
-                self.current_frame = pygame.transform.flip(self.frame[self.__state][self.current_frame_index], True, False)
+                self.current_frame = pygame.transform.flip(self.frame[self.state][self.current_frame_index], True, False)
+            if self.mask_flag:
+                    self.mask = pygame.mask.from_surface(self.current_frame)
+            else:
+                self.mask = None
         
         # uodate pos
-        self.pos += movement
+        self.pos += movement + self.velocity
         self.rect.topleft = self.pos
-            
-            
-        # print(self.pos[0])     
-
+        
+        # print('===>',self.mask_flag)
         
 class Enemy(PhysicsEntity):
     def __init__(self, pos, e_type='enemy'):
         super().__init__(pos, e_type)
-        self.speed = 10
+        self.speed = 0.1
         self.sprite_sheet = 'enemy/darkboss/boss.png'
         
-        self.__state = 'idle'     # default state
-        self.__last_state = self.__state    # lated state of player, default is idle_1
+        self.state = 'idle'     # default state
+        self.__last_state = self.state    # lated state of player, default is idle
         
-        self.frame_size = [240, 96]
+        self.__frame_time = { # time between two frames of an action
+            'idle': 1000 // FPS * 6,
+            'walk': 1000 // FPS * 6,
+            'attack': 1000 // FPS * 8, 
+            'turn back': 1000 // FPS * 20
+        }
+        self.__act = [act for act in self.__frame_time.keys()]
+        self.__counter = 0
+        self.frame_size = [256, 96]
         self.frame = self.__preloadImage(self.sprite_sheet) # a sheet
         self.current_frame_index = 0    # index of frame(list)
-        self.current_frame = self.frame[self.__state][self.current_frame_index]
+        self.current_frame = self.frame[self.state][self.current_frame_index]
+        self.mask = pygame.mask.from_surface(self.frame[self.state][self.current_frame_index])
+        self.mask_flag = True
         
         self.__directions = {1: 'right', -1: 'left'}    # asset has two directions
         self.direction = self.__directions[1]   # default diretion is right
+        self.__last_direction = self.direction
+        self.attacking = False
+        self.moving = False
         
         self.__last_update_time = pygame.time.get_ticks()   # time od the last frame action
         
         self.rect = pygame.Rect(self.pos.x, self.pos.y, self.frame_size[0], self.frame_size[1])
         
-        self.__frame_time = { # time between two frames of an action
-            'idle': 1000 // FPS,
-            # 'die': 1000 // FPS,
-            'attack_1': 1000 // FPS, 
-            'attack_2': 1000 // FPS, 
-            'walk': 1000 // FPS,
-            # 'run': 1000 // FPS * 5,
-            # 'jump': 1000 // FPS
-        }
-        
-        
         
     def __preloadImage(self, link):
-        """
-        frame:
-            0: idle
-            1: walk
-            2: attack_1
-            3: attack_2
-
-
-        """
-        
         sprite_sheet = load_image(link)
         frames = {}
         sheet_width, sheet_height = sprite_sheet.get_size()
         rows = sheet_height // self.frame_size[1]
         columns = sheet_width // self.frame_size[0]
         for y in range(rows):
-            if y == 0:
-                name = 'idle'
-                frames[name] = []
-            elif y == 1:
-                name = 'walk'
-                frames[name] = []
-            elif y == 2:
-                name = 'attack_1'
-                frames[name] = []
-            elif y == 3:
-                name = 'attack-2'
-                frames[name] = []
+            name = self.__act[y]
+            frames[name] = []
             for x in range(columns):
                 frame = sprite_sheet.subsurface(
                     pygame.Rect(
@@ -246,29 +209,89 @@ class Enemy(PhysicsEntity):
                     return True
         return False
     
-    def update(self, player_pos):
-        pass
-    
-    
-# frame = Player(0).frame  
+    def update(self, player_pos: pygame.Vector2, player_status: str, player_size:  list):
+        distance_x = int(player_pos.x + player_size[0]/2 - self.pos.x - self.frame_size[0]/2)
+        distance_y = int(player_pos.y + player_size[1] - self.pos.y - self.frame_size[1])
         
-# print(frame)
-
-# while True:
-#     screen.fill((255,255,255))
-    
-#     suf = pygame.Surface((100, 100))
-#     for i in frame.keys():
-#         for j in range(len(frame[i])):
+        def isInAttackRange(attacking):
+            if attacking:
+                return False
+            elif -70 < distance_x < 70 and -10 < distance_y < 15:
+                self.attacking = True
+                return True
             
-#             screen.blit(frame[i][j], (i*64,j*64))
-#     # screen.blit(suf, (100,100))
+        def move():
+            pass    
+        
+        # print(isInAttackRange())
+        
+        movement_x = distance_x
+        movement_y = distance_y
+        
+        if movement_x or movement_y:
+            movement = pygame.Vector2(movement_x, movement_y).normalize()*self.speed
+        else:
+            movement = pygame.Vector2(0, 0)*self.speed
+        
+        if movement_x:
+            self.direction = self.__directions[movement_x//abs(movement_x)]
+            
+        if isInAttackRange(self.attacking) and self.state != 'attack':
+            self.state = 'attack'
+            self.__counter = len(self.frame['attack']) + 1
+            movement = pygame.Vector2(0,0)
+            self.direction = self.__last_direction
+            
+        else:
+            self.__counter = max(0, self.__counter)    
+            if not self.__counter:
+                if movement_x or movement_y:
+                    self.state = 'walk'
+                    self.__counter = 14
+                else:
+                    self.state = 'idle'
+                self.attacking = False
+            else:
+                if self.state == 'walk':
+                    if self.__counter in [1, 2, 3, 7, 8,9]: # [4, 5, 6, 9, 10, 11, 12] is moving
+                        movement = pygame.Vector2(0, 0)
+                elif self.state == 'attack':
+                    movement = pygame.Vector2(0,0)
+                    self.direction = self.__last_direction
+            
+        __current_time = pygame.time.get_ticks()
+        
+        if self.__last_state == self.state:
+            if __current_time - self.__last_update_time > self.__frame_time[self.state]:
+                self.current_frame_index = (self.current_frame_index + 1) % len(self.frame[self.state])
+                self.__last_update_time = __current_time
+                self.__last_direction = self.direction
+                if self.direction == 'right':
+                    self.current_frame = self.frame[self.state][self.current_frame_index]
+                else:
+                    self.current_frame = pygame.transform.flip(self.frame[self.state][self.current_frame_index], True, False)
+                if self.mask_flag:
+                    self.mask = pygame.mask.from_surface(self.current_frame)
+                else:
+                    self.mask = None
+                self.__counter = self.__counter - 1
+        else:
+            self.current_frame_index = 0
+            self.__last_update_time = __current_time
+            self.__last_state = self.state
+            self.__last_direction = self.direction
 
-#     pygame.display.update()
-    
-#     for event in pygame.event.get():
-#         if event.type == pygame.QUIT:
-#             exit(0)
-    
-#     pygame.display.update()
-    
+            if self.direction == 'right':
+                self.current_frame = self.frame[self.state][self.current_frame_index]
+            else:
+                self.current_frame = pygame.transform.flip(self.frame[self.state][self.current_frame_index], True, False)
+            if self.mask_flag:
+                    self.mask = pygame.mask.from_surface(self.current_frame)
+            else:
+                self.mask = None
+            
+        self.pos += movement + self.velocity
+        self.rect.topleft = self.pos
+
+# pygame.sprite.GroupSingle()
+        # print("--->", self.attacking, isInAttackRange(self.attacking))
